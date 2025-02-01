@@ -21,13 +21,19 @@ flutter:
         default_package: audioplayers_windows
 
 dependencies:
-  audioplayers_android_exo: ^0.0.1
+  audioplayers_android_exo:
+    path: ../../packages/audioplayers_android_exo
   #audioplayers_android: ^4.0.3
-  audioplayers_darwin: ^5.0.2
-  audioplayers_linux: ^3.1.0
-  audioplayers_platform_interface: ^6.1.0
-  audioplayers_web: ^4.1.0
-  audioplayers_windows: ^3.1.0
+  audioplayers_darwin:
+    path: ../../packages/audioplayers_darwin
+  audioplayers_linux:
+    path: ../../packages/audioplayers_linux
+  audioplayers_platform_interface:
+    path: ../../packages/audioplayers_platform_interface
+  audioplayers_web:
+    path: ../../packages/audioplayers_web
+  audioplayers_windows:
+    path: ../../packages/audioplayers_windows
   file: '>=6.1.0 <8.0.0'
   flutter:
     sdk: flutter
@@ -45,4 +51,3 @@ dev_dependencies:
 environment:
   sdk: '>=3.0.0 <4.0.0'
   flutter: '>=3.13.0'
-
