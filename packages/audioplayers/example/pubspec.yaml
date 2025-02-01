@@ -3,26 +3,24 @@ description: Demonstrates how to use the audioplayers plugin.
 publish_to: none
 
 dependencies:
-  audioplayers:
-    path : /home/paul/git/flutter/libraries_used/audioplayers/packages/audioplayers
-#  audioplayers_web: ^4.1.0
-#  audioplayers_android: ^4.0.2
+  audioplayers: #^6.1.1
+    path : ../../../packages/audioplayers
   audioplayers_android_exo:
-    path: /home/paul/git/flutter/libraries_used/audioplayers/packages/audioplayers_android_exo
+    path: ../../../packages/audioplayers_android_exo
 #    path: ../../audioplayers/packages/audioplayers_android_exo
   collection: ^1.16.0
-  file_picker: ^6.1.1
+  file_picker: ^8.0.3
   flutter:
     sdk: flutter
-  http: '>=0.13.1 <2.0.0'
+  http: ^1.0.0
   path_provider: ^2.0.12
   provider: ^6.0.5
 
 dev_dependencies:
   # Integration tests for audioplayers_platform_interface are handled 
   # in this package to avoid maintaining multiple example apps:
-  audioplayers_platform_interface:
-    path: /home/paul/git/flutter/libraries_used/audioplayers/packages/audioplayers_platform_interface
+  audioplayers_platform_interface: #^7.0.0
+    path: ../../../packages/audioplayers_platform_interface
   flame_lint: ^1.0.0
   flutter_test:
     sdk: flutter

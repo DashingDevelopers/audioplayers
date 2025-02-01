@@ -3,29 +3,50 @@ package xyz.luan.audioplayers.player
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
-import androidx.annotation.RequiresApi
 import xyz.luan.audioplayers.AudioContextAndroid
 
 class FocusManager(
     private val player: WrappedPlayer,
+    private val onGranted: () -> Unit,
+    private val onLoss: (isTransient: Boolean) -> Unit,
 ) {
-    private var audioFocusChangeListener: AudioManager.OnAudioFocusChangeListener? = null
-    private var audioFocusRequest: AudioFocusRequest? = null
-
     private val context: AudioContextAndroid
         get() = player.context
+
+    // Listen also for focus changes, e.g. if interrupt playing with a phone call and resume afterward.
+    private var audioFocusRequest: AudioFocusRequest? = null
+
+    // Deprecated variant of listening to focus changes
+    private var audioFocusChangeListener: AudioManager.OnAudioFocusChangeListener? = null
+
+    init {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            audioFocusRequest = AudioFocusRequest.Builder(context.audioFocus)
+                .setAudioAttributes(context.buildAttributes())
+                .setOnAudioFocusChangeListener { handleFocusResult(it) }
+                .build()
+        } else {
+            audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { handleFocusResult(it) }
+        }
+    }
 
     private val audioManager: AudioManager
         get() = player.audioManager
 
-    fun maybeRequestAudioFocus(andThen: () -> Unit) {
+    fun maybeRequestAudioFocus() {
         if (context.audioFocus == AudioManager.AUDIOFOCUS_NONE) {
-            andThen()
+            onGranted()
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            newRequestAudioFocus(andThen)
+            val result = audioManager.requestAudioFocus(audioFocusRequest!!)
+            handleFocusResult(result)
         } else {
             @Suppress("DEPRECATION")
-            oldRequestAudioFocus(andThen)
+            val result = audioManager.requestAudioFocus(
+                audioFocusChangeListener,
+                AudioManager.STREAM_MUSIC,
+                context.audioFocus,
+            )
+            handleFocusResult(result)
         }
     }
 
@@ -40,36 +61,20 @@ class FocusManager(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun newRequestAudioFocus(andThen: () -> Unit) {
-        val audioFocus = context.audioFocus
+    private fun handleFocusResult(result: Int) {
+        when (result) {
+            AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> {
+                onGranted()
+            }
 
-        val audioFocusRequest = AudioFocusRequest.Builder(audioFocus)
-            .setAudioAttributes(context.buildAttributes())
-            .setOnAudioFocusChangeListener { handleFocusResult(it, andThen) }
-            .build()
-        this.audioFocusRequest = audioFocusRequest
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                onLoss(true)
+            }
 
-        val result = audioManager.requestAudioFocus(audioFocusRequest)
-        handleFocusResult(result, andThen)
-    }
-
-    @Deprecated("Use requestAudioFocus instead")
-    private fun oldRequestAudioFocus(andThen: () -> Unit) {
-        val audioFocus = context.audioFocus
-        audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { handleFocusResult(it, andThen) }
-        @Suppress("DEPRECATION")
-        val result = audioManager.requestAudioFocus(
-            audioFocusChangeListener,
-            AudioManager.STREAM_MUSIC,
-            audioFocus,
-        )
-        handleFocusResult(result, andThen)
-    }
-
-    private fun handleFocusResult(result: Int, andThen: () -> Unit) {
-        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            andThen()
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                onLoss(false)
+            }
         }
+        // Keep playing source on `AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK` as sound is ducked.
     }
 }
